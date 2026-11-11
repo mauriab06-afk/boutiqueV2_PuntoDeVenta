@@ -1,0 +1,22 @@
+# Compilados de Java
+*.class
+
+# Base de datos local y respaldos automáticos
+*.db
+*.db-journal
+
+# Archivos de configuración de IDEs (NetBeans, IntelliJ, Eclipse)
+.idea/
+*.iml
+.settings/
+.classpath
+.project
+bin/
+out/
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Instrucciones
+*.txt
