@@ -3,7 +3,7 @@ Sistema de Punto de Venta (POS) de escritorio para gestión de inventarios, vent
 
 ---
 
-## 🛠️ Tecnologías y Librerías
+## Tecnologías y Librerías
 
 * **Lenguaje:** Java 17 (Java Swing GUI)
 * **Base de Datos:** SQLite 3 (`boutique.db`)
@@ -14,7 +14,7 @@ Sistema de Punto de Venta (POS) de escritorio para gestión de inventarios, vent
 
 ---
 
-## 🚀 Características Principales
+## Características Principales
 
 * **Control de Acceso Basado en Roles (RBAC):**
   * **Administrador:** Gestión total de catálogo, reabastecimiento de inventario, reportes de ventas y creación/bloqueo de cuentas.
@@ -32,7 +32,7 @@ Sistema de Punto de Venta (POS) de escritorio para gestión de inventarios, vent
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```text
 boutiquev2/
