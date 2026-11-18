@@ -11,6 +11,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
+import java.net.URI;
 
 public class VentanaPuntoDeVenta extends JFrame {
     private final PuntoDeVentaControlador controlador;
@@ -52,6 +53,7 @@ public class VentanaPuntoDeVenta extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
     private void inicializarComponentes(){
@@ -99,6 +101,11 @@ public class VentanaPuntoDeVenta extends JFrame {
         btnBackup.setForeground(Color.BLACK);
         btnBackup.addActionListener(e -> GestionBackup.crearCopiaManual(this));
 
+        // Botón para abrir la Guía de Usuario en el navegador web
+        JButton btnGuiaUsuario = crearBotonNavegacion("📖 Manual", new Color(23, 162, 184));
+        btnGuiaUsuario.addActionListener(e -> abrirGuiaUsuario());
+        panelBotonesSup.add(btnGuiaUsuario);
+
         //Dependiendo el rol son las ventanas disponibles
         if(!"ADMINISTRADOR".equalsIgnoreCase(usuarioActivo.getRol())){
             btnCatalogo.setEnabled(false);
@@ -117,6 +124,7 @@ public class VentanaPuntoDeVenta extends JFrame {
         panelBotonesSup.add(btnReportes);
         panelBotonesSup.add(btnUsuarios);
         panelBotonesSup.add(btnBackup);
+        panelBotonesSup.add(btnGuiaUsuario); //Buton de guia de usuario
 
         panelSuperior.add(lblTitulo, BorderLayout.WEST);
         panelSuperior.add(panelBotonesSup, BorderLayout.EAST);
@@ -273,6 +281,25 @@ public class VentanaPuntoDeVenta extends JFrame {
         }
         lblTotal.setText(String.format("Total: $%.2f", total));
         actualizandoTabla = false;
+    }
+
+    private void abrirGuiaUsuario(){
+        String url = "https://natsukimybeloved.infinityfreeapp.com/?i=2";
+        try{
+            if(Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(new URI(url));
+            }else{
+                // Respaldo específico para entornos Linux si Desktop.browse no está disponible
+                Runtime.getRuntime().exec(new String[]{"xdg-open", url});
+            }
+        }catch(Exception ex){
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudo abrir el navegador automáticamente.\nVisita: " + url,
+                "Error al abrir enlace",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
     }
 
     public static void main(String[] args){
