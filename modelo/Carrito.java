@@ -8,7 +8,7 @@ import java.util.List;
 public class Carrito {
     private final List<ItemCarrito> items; //Lista de productos del carrito
 
-    //Constructor
+    //Constructor yan derek es hermoso
     public Carrito(){this.items = new ArrayList<>();}
 
     //Agregar un producto
