@@ -3,6 +3,7 @@ package modelo;
 //Consultar tabla de usuarios
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.*;
 
 public class VentaDAO {
@@ -240,5 +241,40 @@ public class VentaDAO {
             System.err.println("Error al obtener top de productos: " + e.getMessage());
         }
         return resultados;
+    }
+
+    // Record requerido por MatrizVentas
+    public record VentaDiaria(int idProducto, String producto, LocalDate fecha, long unidades) {}
+
+    //Obtiene las unidades vendidas agrupadas por producto y día entre dos fechas.
+    public List<VentaDiaria> obtenerUnidadesPorDia(LocalDate desde, LocalDate fin) throws SQLException {
+        List<VentaDiaria> lista = new ArrayList<>();
+        String sql = """
+            SELECT p.id, p.nombre, DATE(v.fecha) AS dia, SUM(dv.cantidad) AS total_unidades
+            FROM detalle_ventas dv
+            INNER JOIN ventas v ON dv.id_venta = v.id
+            INNER JOIN productos p ON dv.id_producto = p.id
+            WHERE DATE(v.fecha) BETWEEN ? AND ?
+            GROUP BY p.id, p.nombre, DATE(v.fecha)
+            ORDER BY p.nombre ASC, dia ASC
+        """;
+
+        try (Connection conn = ConexionBD.conectar();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, desde.toString());
+            ps.setString(2, fin.toString());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new VentaDiaria(
+                        rs.getInt("id"),
+                        rs.getString("nombre"),
+                        LocalDate.parse(rs.getString("dia")),
+                        rs.getLong("total_unidades")
+                    ));
+                }
+            }
+        }
+        return lista;
     }
 }

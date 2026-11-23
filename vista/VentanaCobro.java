@@ -1,145 +1,190 @@
 package vista;
 
-//Interfaz al momento de realizar el cobro
+//Ventana moderna para procesar el cobro y calcular el cambio
 
-import modelo.*;
-import controlador.*;
-
-import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyListener;
+import javax.swing.*;
 
 public class VentanaCobro extends JDialog{
-    private final double total;
-    private boolean pagoConfirmado = false;
+    //Paleta de colores del diseno
+    private final Color VERDE_HEADER = new Color(26, 108, 52);
+    private final Color VERDE_PRIMARIO = new Color(34, 153, 72);
+    private final Color FONDO_CREMA = new Color(247, 245, 238);
+    private final Color PILDORA_STOCK_BG = new Color(214, 240, 221);
+    private final Color ROJO_ALERTA = new Color(220, 53, 69);
 
+    //Componentes de captura y botones
     private JTextField txtMontoRecibido;
     private JLabel lblCambio;
 
-    //Constructor
-    public VentanaCobro(Frame parent, double total) {
+    private JButton btnPagoExacto;
+    private JButton btnConfirmar;
+    private JButton btnCancelar;
+
+    //Constructor principal
+    public VentanaCobro(Frame parent, double total){
         super(parent, "Cobro de Venta", true);
-        this.total = total;
         configurarVentana();
-        inicializarComponentes();
+        inicializarComponentes(total);
     }
 
-    //COnfiguracion de la ventana
-    private void configurarVentana() {
-        setSize(400, 300);
+    //Configura tamano, centrado y color de fondo
+    private void configurarVentana(){
+        setSize(480, 410);
         setLocationRelativeTo(getParent());
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout());
+        getContentPane().setBackground(FONDO_CREMA);
         setResizable(false);
     }
 
-    //Creacion de componentes
-    private void inicializarComponentes(){
-        //Panel estructurado en tabla
-        JPanel panelCentral = new JPanel(new GridLayout(3, 2, 10, 15));
-        panelCentral.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+    //Arma el encabezado verde, la tarjeta de cobro y los botones inferiores
+    private void inicializarComponentes(double total){
+        //Barra superior verde bosque
+        JPanel panelHeader = new JPanel(new BorderLayout());
+        panelHeader.setBackground(VERDE_HEADER);
+        panelHeader.setBorder(BorderFactory.createEmptyBorder(14, 22, 14, 22));
+
+        JLabel lblTitulo = new JLabel("✓  Finalizar y Cobrar Venta");
+        lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 19));
+        lblTitulo.setForeground(Color.WHITE);
+
+        JLabel lblSubtitulo = new JLabel("Ingresa el efectivo recibido para calcular el cambio");
+        lblSubtitulo.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        lblSubtitulo.setForeground(new Color(210, 240, 220));
+
+        JPanel panelTitulos = new JPanel();
+        panelTitulos.setOpaque(false);
+        panelTitulos.setLayout(new BoxLayout(panelTitulos, BoxLayout.Y_AXIS));
+        panelTitulos.add(lblTitulo);
+        panelTitulos.add(Box.createVerticalStrut(3));
+        panelTitulos.add(lblSubtitulo);
+
+        panelHeader.add(panelTitulos, BorderLayout.WEST);
+        add(panelHeader, BorderLayout.NORTH);
+
+        //Contenedor principal sobre fondo crema
+        JPanel panelCuerpo = new JPanel(new BorderLayout(0, 14));
+        panelCuerpo.setBackground(FONDO_CREMA);
+        panelCuerpo.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
+
+        //Tarjeta blanca redondeada con los montos
+        JPanel tarjetaCobro = new JPanel(new GridBagLayout());
+        tarjetaCobro.setBackground(Color.WHITE);
+        tarjetaCobro.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
+        tarjetaCobro.putClientProperty("FlatLaf.style", "arc: 20");
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(8, 4, 8, 4);
 
         JLabel lblTotalTitulo = new JLabel("Total a Pagar:");
-        lblTotalTitulo.setFont(new Font("Arial", Font.BOLD, 16));
+        lblTotalTitulo.setFont(new Font("SansSerif", Font.BOLD, 15));
+        lblTotalTitulo.setForeground(new Color(65, 70, 68));
 
-        JLabel lblTotalValor = new JLabel(String.format("$%.2f", total));
-        lblTotalValor.setFont(new Font("Arial", Font.BOLD, 22));
-        lblTotalValor.setForeground(new Color(34, 139, 34));
+        JLabel lblTotalValor = new JLabel(String.format("$%.2f", total), SwingConstants.RIGHT);
+        lblTotalValor.setFont(new Font("SansSerif", Font.BOLD, 26));
+        lblTotalValor.setForeground(VERDE_HEADER);
 
         JLabel lblEfectivo = new JLabel("Efectivo Recibido:");
-        lblEfectivo.setFont(new Font("Arial", Font.BOLD, 16));
+        lblEfectivo.setFont(new Font("SansSerif", Font.BOLD, 15));
+        lblEfectivo.setForeground(new Color(65, 70, 68));
 
         txtMontoRecibido = new JTextField();
-        txtMontoRecibido.setFont(new Font("Arial", Font.BOLD, 18));
-
-        //Escuchar al teclado en tiempo real
-        txtMontoRecibido.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                calcularCambio();
-            }
-        });
+        txtMontoRecibido.setFont(new Font("SansSerif", Font.BOLD, 20));
+        txtMontoRecibido.setHorizontalAlignment(SwingConstants.RIGHT);
+        txtMontoRecibido.setPreferredSize(new Dimension(160, 42));
+        txtMontoRecibido.putClientProperty("JTextField.placeholderText", "0.00");
+        txtMontoRecibido.putClientProperty("FlatLaf.style", "arc: 14");
 
         JLabel lblCambioTitulo = new JLabel("Cambio:");
-        lblCambioTitulo.setFont(new Font("Arial", Font.BOLD, 16));
+        lblCambioTitulo.setFont(new Font("SansSerif", Font.BOLD, 15));
+        lblCambioTitulo.setForeground(new Color(65, 70, 68));
 
-        lblCambio = new JLabel("$0.00");
-        lblCambio.setFont(new Font("Arial", Font.BOLD, 20));
-        lblCambio.setForeground(Color.BLUE);
+        lblCambio = new JLabel("$0.00", SwingConstants.RIGHT);
+        lblCambio.setFont(new Font("SansSerif", Font.BOLD, 24));
+        lblCambio.setForeground(VERDE_PRIMARIO);
 
-        panelCentral.add(lblTotalTitulo);
-        panelCentral.add(lblTotalValor);
-        panelCentral.add(lblEfectivo);
-        panelCentral.add(txtMontoRecibido);
-        panelCentral.add(lblCambioTitulo);
-        panelCentral.add(lblCambio);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.45;
+        tarjetaCobro.add(lblTotalTitulo, gbc);
+        gbc.gridx = 1; gbc.weightx = 0.55;
+        tarjetaCobro.add(lblTotalValor, gbc);
 
-        add(panelCentral, BorderLayout.CENTER);
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.45;
+        tarjetaCobro.add(lblEfectivo, gbc);
+        gbc.gridx = 1; gbc.weightx = 0.55;
+        tarjetaCobro.add(txtMontoRecibido, gbc);
 
-        //Panel inferior para los botones
-        JPanel panelInferior = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0.45;
+        tarjetaCobro.add(lblCambioTitulo, gbc);
+        gbc.gridx = 1; gbc.weightx = 0.55;
+        tarjetaCobro.add(lblCambio, gbc);
 
-        //Boton para monto exacto
-        JButton btnPagoExacto = new JButton("Pago Exacto");
-        btnPagoExacto.setFont(new Font("Arial", Font.BOLD, 13));
-        btnPagoExacto.addActionListener(e -> {
-            txtMontoRecibido.setText(String.format("%.2f", total));
-            calcularCambio();
-        });
+        panelCuerpo.add(tarjetaCobro, BorderLayout.CENTER);
 
-        //Boton para confirmar cobro
-        JButton btnConfirmar = new JButton("✓ Confirmar Venta");
-        btnConfirmar.setFont(new Font("Arial", Font.BOLD, 14));
-        btnConfirmar.setBackground(new Color(40, 167, 69));
+        //Panel inferior con botones redondeados
+        JPanel panelInferior = new JPanel(new BorderLayout(0, 10));
+        panelInferior.setOpaque(false);
+
+        btnPagoExacto = new JButton("=  Pago Exacto");
+        btnPagoExacto.setFont(new Font("SansSerif", Font.BOLD, 13));
+        btnPagoExacto.setBackground(PILDORA_STOCK_BG);
+        btnPagoExacto.setForeground(VERDE_HEADER);
+        btnPagoExacto.setPreferredSize(new Dimension(0, 38));
+        btnPagoExacto.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnPagoExacto.putClientProperty("FlatLaf.style", "arc: 16");
+
+        JPanel filaPrincipales = new JPanel(new GridLayout(1, 2, 12, 0));
+        filaPrincipales.setOpaque(false);
+
+        btnCancelar = new JButton("✕  Cancelar");
+        btnCancelar.setFont(new Font("SansSerif", Font.BOLD, 13));
+        btnCancelar.setBackground(ROJO_ALERTA);
+        btnCancelar.setForeground(Color.WHITE);
+        btnCancelar.setPreferredSize(new Dimension(0, 44));
+        btnCancelar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnCancelar.putClientProperty("FlatLaf.style", "arc: 18");
+
+        btnConfirmar = new JButton("✓  Confirmar Venta");
+        btnConfirmar.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btnConfirmar.setBackground(VERDE_PRIMARIO);
         btnConfirmar.setForeground(Color.WHITE);
-        btnConfirmar.addActionListener(e -> {
-            if(validarPago()){
-                pagoConfirmado = true;
-                dispose();
-            }
-        });
+        btnConfirmar.setPreferredSize(new Dimension(0, 44));
+        btnConfirmar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnConfirmar.putClientProperty("FlatLaf.style", "arc: 18");
 
-        //Boton para cancelar
-        JButton btnCancelar = new JButton("Cancelar");
-        btnCancelar.setFont(new Font("Arial", Font.PLAIN, 13));
-        btnCancelar.addActionListener(e -> dispose());
+        filaPrincipales.add(btnCancelar);
+        filaPrincipales.add(btnConfirmar);
 
-        panelInferior.add(btnPagoExacto);
-        panelInferior.add(btnConfirmar);
-        panelInferior.add(btnCancelar);
+        panelInferior.add(btnPagoExacto, BorderLayout.NORTH);
+        panelInferior.add(filaPrincipales, BorderLayout.SOUTH);
 
-        add(panelInferior, BorderLayout.SOUTH);
+        panelCuerpo.add(panelInferior, BorderLayout.SOUTH);
+        add(panelCuerpo, BorderLayout.CENTER);
     }
 
-    //Calcular cambio en base al monto ingresado
-    private void calcularCambio(){
-        try{
-            double recibido = Double.parseDouble(txtMontoRecibido.getText().trim());
-            double cambio = recibido - total;
-            if(cambio >= 0){
-                lblCambio.setText(String.format("$%.2f", cambio));
-                lblCambio.setForeground(new Color(34, 139, 34));
-            }else{
-                lblCambio.setText("Falta: $" + String.format("%.2f", Math.abs(cambio)));
-                lblCambio.setForeground(Color.RED);
-            }
-        }catch(NumberFormatException e){
-            lblCambio.setText("$0.00");
-            lblCambio.setForeground(Color.BLUE);
-        }
+    //Metodos para que el controlador lea y actualice la vista
+    public String getMontoRecibidoTexto(){ return txtMontoRecibido.getText().trim(); }
+    public void setMontoRecibidoTexto(String texto){ txtMontoRecibido.setText(texto); }
+
+    //Actualiza el texto y color del cambio calculado
+    public void actualizarEstadoCambio(String texto, Color color){
+        lblCambio.setText(texto);
+        lblCambio.setForeground(color);
     }
 
-    //Valida que el numero ingresado sea valido
-    private boolean validarPago(){
-        try{
-            double recibido = Double.parseDouble(txtMontoRecibido.getText().trim());
-            if(recibido < total){
-                JOptionPane.showMessageDialog(this, "El monto recibido es menor al total a pagar.", "Atención", JOptionPane.WARNING_MESSAGE);
-                return false;
-            }
-            return true;
-        }catch(NumberFormatException e){
-            JOptionPane.showMessageDialog(this, "Ingrese un monto válido en efectivo.", "Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
+    //Muestra ventanas emergentes de aviso o error
+    public void mostrarMensaje(String mensaje, String titulo, int tipoMensaje){
+        JOptionPane.showMessageDialog(this, mensaje, titulo, tipoMensaje);
     }
 
-    public boolean isPagoConfirmado(){return pagoConfirmado;}
+    //Registro de listeners desde el controlador
+    public void agregarListeners(KeyListener onTecladoMonto, ActionListener onPagoExacto,
+                                 ActionListener onConfirmar, ActionListener onCancelar){
+        txtMontoRecibido.addKeyListener(onTecladoMonto);
+        btnPagoExacto.addActionListener(onPagoExacto);
+        btnConfirmar.addActionListener(onConfirmar);
+        btnCancelar.addActionListener(onCancelar);
+    }
 }

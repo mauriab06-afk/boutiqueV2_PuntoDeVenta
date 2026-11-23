@@ -134,4 +134,44 @@ public class ProductoDAO{
         }
         return productos;
     }
+
+    /**
+     * Busca productos activos filtrando por nombre, ordenados por categoría y nombre.
+     */
+    public List<Producto> buscarActivosPorNombre(String filtro) throws SQLException {
+        List<Producto> lista = new ArrayList<>();
+        String sql = "SELECT id, nombre, categoria, precio, COALESCE(stock, 0) AS stock " +
+                     "FROM productos WHERE activo = 1 AND nombre LIKE ? ORDER BY categoria, nombre";
+
+        try (Connection conn = ConexionBD.conectar();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + filtro + "%");
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Producto p = new Producto(
+                        rs.getInt("id"),
+                        rs.getString("nombre"),
+                        rs.getDouble("precio"),
+                        rs.getString("categoria"),
+                        true
+                    );
+                    p.setStock(rs.getInt("stock"));
+                    lista.add(p);
+                }
+            }
+        }
+        return lista;
+    }
+
+    //Actualiza la cantidad en stock de un producto específico.
+
+    public void actualizarStock(int idProducto, int nuevoStock) throws SQLException {
+        String sql = "UPDATE productos SET stock = ? WHERE id = ?";
+        try (Connection conn = ConexionBD.conectar();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, nuevoStock);
+            pstmt.setInt(2, idProducto);
+            pstmt.executeUpdate();
+        }
+    }
 }

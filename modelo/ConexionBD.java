@@ -1,22 +1,25 @@
 package modelo;
 
-//Clase encargada de la conexion con la base de datos del archivo local por medio de SQLite
+//Clase encargada de la conexion con la base de datos SQLite y creacion de tablas
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class ConexionBD{
-    //Ruta al archivo de base de datos SQLite
+    //Ruta del archivo local de la base de datos
     private static final String URL = "jdbc:sqlite:boutique.db";
 
-    //Establece y retorna una nueva conexión con la base de datos.
+    //Abre y devuelve una nueva conexion hacia SQLite
     public static Connection conectar() throws SQLException{
         return DriverManager.getConnection(URL);
     }
 
-    //Verificamos la existencia de las tablas y si no se crean (IF NOT)
+    //Verifica la existencia de las tablas principales y las crea si faltan
     public static void inicializarBaseDatos(){
         String sqlProductos = "CREATE TABLE IF NOT EXISTS productos (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -48,20 +51,33 @@ public class ConexionBD{
                 "rol TEXT NOT NULL, " +
                 "activo INTEGER DEFAULT 1);";
 
-        //En caso de que no se tengan los usuarios de prueba (ACTIVAR)
-        //String sqlAdminSeed = "INSERT OR IGNORE INTO usuarios (usuario, password, rol) VALUES ('admin', 'admin123', 'ADMINISTRADOR');";
-        //String sqlCajeroSeed = "INSERT OR IGNORE INTO usuarios (usuario, password, rol) VALUES ('cajero', '1234', 'CAJERO');";
-
-        // Ejecución de sentencias usando autoclose para liberar la conexión al terminar
+        //Ejecuta la creacion de tablas cerrando recursos automaticamente
         try(Connection conn = conectar(); Statement stmt = conn.createStatement()){
             stmt.execute(sqlProductos);
             stmt.execute(sqlVentas);
             stmt.execute(sqlDetalle);
             stmt.execute(sqlUsuarios);
-            //stmt.execute(sqlAdminSeed);
-            //stmt.execute(sqlCajeroSeed);
-        }catch (SQLException e){
+
+            //Si la tabla de usuarios esta vacia crea un administrador inicial cifrado
+            crearAdminSiNoExiste(conn);
+        }catch(SQLException e){
             System.err.println("Error al inicializar la base de datos: " + e.getMessage());
+        }
+    }
+
+    //Inserta el usuario administrador por defecto con contrasena cifrada si no hay usuarios
+    private static void crearAdminSiNoExiste(Connection conn) throws SQLException{
+        String sqlContar = "SELECT COUNT(*) FROM usuarios";
+        try(Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sqlContar)){
+            if(rs.next() && rs.getInt(1) == 0){
+                String sqlInsert = "INSERT INTO usuarios (usuario, password, rol, activo) VALUES (?, ?, ?, 1)";
+                try(PreparedStatement pstmt = conn.prepareStatement(sqlInsert)){
+                    pstmt.setString(1, "admin");
+                    pstmt.setString(2, BCrypt.hashpw("admin123", BCrypt.gensalt()));
+                    pstmt.setString(3, "ADMINISTRADOR");
+                    pstmt.executeUpdate();
+                }
+            }
         }
     }
 }
